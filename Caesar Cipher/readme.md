@@ -1,6 +1,7 @@
 # caesar.c  
   
-Simple implementation of the caesar cipher.  
+Simple implementation of the caesar cipher  
+that can encode and decode txt files.  
 Alphabet consists of the characters matching  
 [a-zA-Z ,.:;_!?'"\-] as well as the newline character.  
   
