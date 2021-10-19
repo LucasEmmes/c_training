@@ -1,9 +1,10 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <assert.h>
+#include <string.h>
 
-char alphabet[32] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', ' ', ',', '.', '!', '?', '\n'};
-char shifted_alphabet[32] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', ' ', ',', '.', '!', '?', '\n'};
+char alphabet[64] = {'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', ' ', ',', '.', '!', '?', '\n', ':', ';', '-', '_', '\'', '"'};
+char shifted_alphabet[64] = {'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', ' ', ',', '.', '!', '?', '\n', ':', ';', '-', '_', '\'', '"'};
 
 void shift_alphabet(char alph[], char n) {
 
@@ -17,7 +18,7 @@ void shift_alphabet(char alph[], char n) {
     }
 
     // Shift characters left by a factor of n
-    for (char i = 0; i < 32-n; i++)
+    for (char i = 0; i < 64-n; i++)
     {
         alph[i] = alph[i+n];
     }
@@ -25,36 +26,49 @@ void shift_alphabet(char alph[], char n) {
     // Put overflow back
     for (char i = 0; i < n; i++)
     {
-        alph[32-n+i] = temp[i];
+        alph[64-n+i] = temp[i];
     }
     
     free(temp);
 }
 
-char translate_letter(char letter) {
+char translate_letter(char letter, char plain[], char shifted[]) {
 
     // Find index of letter in correct alphabet
-    char index = 0;
-    while (alphabet[index] != letter)
+    for (char i = 0; i < 64; i++)
     {
-        index ++;
+        if (plain[i] == letter) {
+            return shifted[i];
+        }
     }
-    
-    return shifted_alphabet[index];
 
+    // If it wasn't found, simple return original letter
+    return letter;
 }
 
 
 // TODO: take command line arguments
-// TODO: enable encryption and decryption
-// TODO: write output to file
 int main(int argc, char const *argv[]) {
+    char key, operation;
+    
+    if (argc != 5) {
+        printf("Usage: ./caesar [input filename] [output filename] [key (int)] [Operation en|de]\n");
+    } else {
+        key = (char) atoi(argv[3]) % 64;
 
-    char key = 5;
+        if (!strcmp("encode", argv[4])) {
+            operation = 1;
+        } else if (!strcmp("decode", argv[4])) {
+            operation = 0;
+        } else {
+            printf("Unknown type of operation\nUsage: ./caesar [input filename] [output filename] [key (int)] [Operation en|de]\n");
+            return 1;
+        }
+    }
 
     // Open file
     FILE *fPointer;
-    fPointer = fopen("cock.txt", "r");
+    fPointer = fopen(argv[1], "r");
 
     // Measure file to get accurate length, since fseek(fPointer, 0L, SEEK_END)
     // somehow counts '\n' as two chars
@@ -72,63 +86,39 @@ int main(int argc, char const *argv[]) {
 
     // Alloc space for string
     char * text = malloc(sizeof(char) * input_length);
-    char char_check;
-    // Read file again, transfer to text
+    // Read in text
     for (int i = 0; i < input_length; i++)
     {
-        char_check = fgetc(fPointer);
-        if ((char_check >= 65 && char_check <= 90) || char_check == 32 || char_check == 44 || char_check == 46 || char_check == 33 || char_check == 63 || char_check == 10) {
-            // valid
-        } else if (char_check >= 97 && char_check <= 122) {
-            // lowercase character
-            char_check = char_check - 32;
-        } else {
-            // invalid character, insert '?'
-            char_check = 63;
-        }
-
-        text[i] = char_check;
+        text[i] = fgetc(fPointer);
     }
-
-    // Print text (for debug)
-    for (int i = 0; i < input_length; i++)
-    {
-        printf("%c", text[i]);
-    }
-    printf("\n\n");
-
+    fclose(fPointer);
 
     // Shift correct amount
     shift_alphabet(shifted_alphabet, key);
 
-    // apply shifted alphabet to text
-    for (int i = 0; i < input_length; i++)
+    // Apply shifted alphabet to text
+    if (operation) // Encoding
     {
-        text[i] = translate_letter(text[i]);
+        for (int i = 0; i < input_length; i++)
+        {
+            text[i] = translate_letter(text[i], alphabet, shifted_alphabet);
+        }
     }
-    
-    printf("_");
-    // Print text (for debug)
-    for (int i = 0; i < input_length; i++)
+    else        // Decoding
     {
-        printf("%c", text[i]);
+        for (int i = 0; i < input_length; i++)
+        {
+            text[i] = translate_letter(text[i], shifted_alphabet, alphabet);
+        }
     }
-    printf("_");
 
-    // save to output file
-
-
-
-    // // Find end
-    // fseek(fPointer, 0L, SEEK_END);
-    // // Save length
-    // int input_length1 = ftell(fPointer);
-    // printf("Length 1: %d\n", input_length1);
-    // // Go back to start
-
-    
+    // Save to output file
+    FILE * fPoint_output;
+    fopen_s(& fPoint_output, argv[2], "w");
+    if (fPoint_output == NULL) {return 1;}
+    fwrite(text, sizeof(char), input_length, fPoint_output);
+    fclose(fPoint_output);
 
     free(text);
-    fclose(fPointer);
     return 0;
 }
