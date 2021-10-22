@@ -3,46 +3,37 @@
 #include <assert.h>
 #include <string.h>
 
-char alphabet[64] = {'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', ' ', ',', '.', '!', '?', '\n', ':', ';', '-', '_', '\'', '"'};
-char shifted_alphabet[64] = {'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', ' ', ',', '.', '!', '?', '\n', ':', ';', '-', '_', '\'', '"'};
 
-void shift_alphabet(char alph[], char n) {
-
-    // Allocate enough mempry to hold what is shifted out the left side
-    char * temp = malloc(sizeof(char) * n);
-
-    // Transfer left overflow
-    for (char i = 0; i < n; i++)
-    {
-        temp[i] = alph[i];
+char compress_letter(char letter) {
+    if (letter == 10) {
+        letter = 0;
+    } else if (letter >= 32 && letter <= 126) {
+        letter -= 31;
+    } else {
+        letter = 64;
     }
 
-    // Shift characters left by a factor of n
-    for (char i = 0; i < 64-n; i++)
-    {
-        alph[i] = alph[i+n];
-    }
-
-    // Put overflow back
-    for (char i = 0; i < n; i++)
-    {
-        alph[64-n+i] = temp[i];
-    }
-    
-    free(temp);
+    return letter;
 }
 
-char translate_letter(char letter, char plain[], char shifted[]) {
-
-    // Find index of letter in correct alphabet
-    for (char i = 0; i < 64; i++)
-    {
-        if (plain[i] == letter) {
-            return shifted[i];
-        }
+char decompress_letter(char letter) {
+    if (letter == 0) {
+        letter = 10;
+    } else  {
+        letter += 31;
     }
 
-    // If it wasn't found, simple return original letter
+    return letter;
+}
+
+char shift_letter(char letter, char key) {
+    printf("Raw: %c (%d) ", letter, letter);
+    letter = compress_letter(letter);
+    printf("Compressed: %d ", letter);
+    letter = (letter + key)+96 % 96;
+    printf("Shifted: %d ", letter);
+    letter = decompress_letter(letter);
+    printf("Decompressed: %c (%d)\n", letter, letter);
     return letter;
 }
 
@@ -59,7 +50,7 @@ int main(int argc, char const *argv[]) {
         if (!strcmp("encode", argv[4])) {
             operation = 1;
         } else if (!strcmp("decode", argv[4])) {
-            operation = 0;
+            operation = -1;
         } else {
             printf("Unknown type of operation\nUsage: ./caesar [input filename] [output filename] [key (int)] [Operation en|de]\n");
             return 1;
@@ -93,24 +84,13 @@ int main(int argc, char const *argv[]) {
     }
     fclose(fPointer);
 
-    // Shift correct amount
-    shift_alphabet(shifted_alphabet, key);
 
-    // Apply shifted alphabet to text
-    if (operation) // Encoding
+    for (int i = 0; i < input_length; i++)
     {
-        for (int i = 0; i < input_length; i++)
-        {
-            text[i] = translate_letter(text[i], alphabet, shifted_alphabet);
-        }
+        text[i] = shift_letter(text[i], key*operation);
     }
-    else        // Decoding
-    {
-        for (int i = 0; i < input_length; i++)
-        {
-            text[i] = translate_letter(text[i], shifted_alphabet, alphabet);
-        }
-    }
+
+
 
     // Save to output file
     FILE * fPoint_output;
