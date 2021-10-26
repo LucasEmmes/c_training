@@ -3,7 +3,6 @@
 #include <assert.h>
 #include <string.h>
 
-
 char compress_letter(char letter) {
     if (letter == 10) {
         letter = 0;
@@ -27,23 +26,22 @@ char decompress_letter(char letter) {
 }
 
 char shift_letter(char letter, char key) {
-    printf("Raw: %c (%d) ", letter, letter);
+    // printf("Raw: %c (%d) ", letter, letter);
     letter = compress_letter(letter);
-    printf("Compressed: %d ", letter);
-    letter = (letter + key)+96 % 96;
-    printf("Shifted: %d ", letter);
+    // printf("Compressed: %d ", letter);
+    letter = (letter + key + 96) % 96;
+    // printf("Shifted: %d ", letter);
     letter = decompress_letter(letter);
-    printf("Decompressed: %c (%d)\n", letter, letter);
+    // printf("Decompressed: %c (%d)\n", letter, letter);
     return letter;
 }
 
 
-// TODO: take command line arguments
 int main(int argc, char const *argv[]) {
     char key, operation;
     
     if (argc != 5) {
-        printf("Usage: ./caesar [input filename] [output filename] [key (int)] [Operation en|de]\n");
+        printf("Usage: ./caesar [input filename] [output filename] [key (int)] [Operation encode|decode]\n");
     } else {
         key = (char) atoi(argv[3]) % 64;
 
@@ -52,7 +50,7 @@ int main(int argc, char const *argv[]) {
         } else if (!strcmp("decode", argv[4])) {
             operation = -1;
         } else {
-            printf("Unknown type of operation\nUsage: ./caesar [input filename] [output filename] [key (int)] [Operation en|de]\n");
+            printf("Unknown type of operation\nUsage: ./caesar [input filename] [output filename] [key (int)] [Operation encode|decode]\n");
             return 1;
         }
     }
@@ -75,7 +73,7 @@ int main(int argc, char const *argv[]) {
     rewind(fPointer);
 
 
-    // Alloc space for string
+    // Allocate space for string
     char * text = malloc(sizeof(char) * input_length);
     // Read in text
     for (int i = 0; i < input_length; i++)
@@ -84,12 +82,11 @@ int main(int argc, char const *argv[]) {
     }
     fclose(fPointer);
 
-
+    // Loop over text and shift every letter
     for (int i = 0; i < input_length; i++)
     {
         text[i] = shift_letter(text[i], key*operation);
     }
-
 
 
     // Save to output file
