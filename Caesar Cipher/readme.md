@@ -12,3 +12,6 @@ this range will be mapped to the underscore ('_') character
   
 Usage:  
 ./caesar [input filename] [output filename] [key (int)] [Operation en|de]
+
+Appended are an example plain- and ciphertext encoded  
+with a key value of 69
