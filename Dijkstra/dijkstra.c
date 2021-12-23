@@ -1,63 +1,143 @@
 #include <stdio.h>
-#include <stdlib.h>
 #include <assert.h>
+#include <stdint.h>
+#include <stdlib.h>
+#include <string.h>
 
-typedef struct node_t {
-    char name;
-    short shortest_path_length;
-    char num_of_edges;
-    char active;
-    struct node_t * shortest_path_via;
-    struct node_t * * edges;
-    char * weights;
-} node_t;
+struct node_t;
 
-void add_edge(node_t * node1, node_t * node2, char weight) {
-    char old_length = node1->num_of_edges;
-    char new_length = old_length + 1;
+struct edge_t {
+    struct node_t * node;
+    uint32_t cost;
+};
 
-    node_t * * new_edges = (struct node_t * *) malloc(sizeof(node_t)*new_length);
-    char * new_weights = (char *) malloc(sizeof(char) * new_length);
 
-    for (char i = 0; i < new_length-1; i++)
-    {
-        new_edges[i] = node1->edges[i];
-        new_weights[i] = node1->weights[i];
-    }
+struct node_t {
+    uint32_t id;
+    uint64_t shortest_distance;
+    uint32_t best_parent;
+    uint8_t in_queue;
+    uint16_t num_of_actual_edges;
+    uint16_t num_of_edges_available;
+    struct edge_t edges[];
+};
 
-    new_edges[new_length-1] = node2;
-    new_weights[new_length-1] = weight;
 
-    // Free the old arrays
-    free(node1->edges);
-    free(node1->weights);
 
-    node1->edges = new_edges;
-    node1->weights = new_weights;
-    node1->num_of_edges = new_length;
+struct node_t * create_node(uint32_t id) {
+    struct node_t * new_node = malloc(sizeof(* new_node) + sizeof(struct edge_t)*10);
+    
+    new_node->id = id;
+    new_node->shortest_distance = -1;
+    new_node->best_parent = 0;
+    new_node->in_queue = 0;
+    new_node->num_of_actual_edges = 0;
+    new_node->num_of_edges_available = 10;
+
+    return new_node;
 }
 
-void print_edges(node_t node) {
-    printf("Edges: %d\n", node.num_of_edges);
-    for (char i = 0; i < node.num_of_edges; i++)
-    {
-        printf("N:%c W:%d, ", node.edges[i]->name, node.weights[i]);
+struct node_t * add_edge(struct node_t * from, struct node_t * to, uint32_t cost) {
+    // If there is still space for more edges without expanding
+    if (from->num_of_edges_available > from->num_of_actual_edges) {
+        // Make edge struct
+        struct edge_t new_edge;
+        new_edge.node = to;
+        new_edge.cost = cost;
+
+        // Add struct to array
+        from->edges[from->num_of_actual_edges] = new_edge;
+
+        // Add 1 to counter
+        from->num_of_actual_edges++;
+
+        return from;
     }
-    printf("\n");
+    // If there are no more spaces: double available
+    else {
+        struct node_t * larger_node = malloc(sizeof(* larger_node) + sizeof(struct edge_t)*from->num_of_edges_available*2);
+        memcpy(larger_node, from, sizeof(*from));
+        larger_node->num_of_edges_available = from->num_of_edges_available*2;
+        free(from);
+
+        // Make edge struct
+        struct edge_t new_edge;
+        new_edge.node = to;
+        new_edge.cost = cost;
+
+        // Add struct to array
+        larger_node->edges[larger_node->num_of_actual_edges] = new_edge;
+
+        // Add 1 to counter
+        larger_node->num_of_actual_edges++;
+
+        return larger_node;
+    }
+}
+
+int comp_nodes(const void * a, const void * b) {
+    struct node_t * node_a = *(struct node_t * * ) a;
+    struct node_t * node_b = *(struct node_t * * ) b;
+
+    return node_b->shortest_distance - node_a->shortest_distance;
+}
+
+int dijkstra(){
+    // add start node to queue
+    // counter for queue length
+
+    // while queue is not empty
+        
+        // POP (IN C)
+        // copy last element in list
+        // overwrite as NULL
+
+        // IS NODE GOAL? => DONE
+        // if node.id == goal.id
+            // break
+
+        // EXPAND NODE (IN C)
+        // for i in range(node.numofactual)
+            // n = node.edge[i].node
+            // if n.shortest_path > node.shortest + edge.cost
+                // n.shortest = node.shortest + edge.cost
+                // n.best_parent = node
+                // if not n.in_queue
+                    // last ++;
+                    // queue[last] = n
+        
+        // SORT QUEUE
+        // qsort
+
+    // DO SOME SHID
+};
+
+
+void print_data(struct node_t * a) {
+    printf("Id: %d\n", a->id);
+    printf("Shortest path: %d\n", a->shortest_distance);
+    printf("Best parent: %d\n", a->best_parent);
+    printf("Actual edges: %d\n", a->num_of_actual_edges);
+    printf("Edges available: %d\n", a->num_of_edges_available);
 }
 
 int main(int argc, char const *argv[])
 {
 
-    node_t a;
-    a.name = 'a';
+    struct node_t * a;
+    a = create_node(0);
+    a->shortest_distance = 12;
 
-    node_t b;
-    b.name = 'b';
+    struct node_t * b;
+    b = create_node(1);
+    b->shortest_distance = 11;
 
-    add_edge(&a, &b, 5);
+    // a = add_edge(a, b, 69);
 
-    print_edges(a);
+    struct node_t * p[] = {a, b};
+    printf("%d, %d\n", p[0]->shortest_distance, p[1]->shortest_distance);
+    qsort(p, 2, sizeof(struct node_t *), comp_nodes);
+    printf("%d, %d\n", p[0]->shortest_distance, p[1]->shortest_distance);
 
 
     return 0;
