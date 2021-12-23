@@ -134,11 +134,14 @@ int main(int argc, char const *argv[])
 
     // a = add_edge(a, b, 69);
 
-    struct node_t * p[] = {a, b};
+    struct node_t * p[] = {b, a};
     printf("%d, %d\n", p[0]->shortest_distance, p[1]->shortest_distance);
     qsort(p, 2, sizeof(struct node_t *), comp_nodes);
     printf("%d, %d\n", p[0]->shortest_distance, p[1]->shortest_distance);
 
+
+    free(a);
+    free(b);
 
     return 0;
 }
