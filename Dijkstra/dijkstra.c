@@ -4,13 +4,14 @@
 #include <stdlib.h>
 #include <string.h>
 
+uint32_t id_counter = 0;
+
 struct node_t;
 
 struct edge_t {
     struct node_t * node;
     uint32_t cost;
 };
-
 
 struct node_t {
     uint32_t id;
@@ -22,20 +23,43 @@ struct node_t {
     struct edge_t edges[];
 };
 
+struct dict_t {
+    struct node_t * node;
+    struct dict_list_t * characters;
+};
 
+struct dict_list_t {
+    struct dict_t * entries[256];
+};
 
-struct node_t * create_node(uint32_t id) {
-    struct node_t * new_node = malloc(sizeof(* new_node) + sizeof(struct edge_t)*10);
+void initialize_node(struct node_t * new_node) {
+    new_node = malloc(sizeof(* new_node) + sizeof(struct edge_t)*10);
     
-    new_node->id = id;
+    new_node->id = id_counter;
     new_node->shortest_distance = -1;
     new_node->best_parent = 0;
     new_node->in_queue = 0;
     new_node->num_of_actual_edges = 0;
     new_node->num_of_edges_available = 10;
 
-    return new_node;
+    id_counter ++;
 }
+
+void initialize_dict(struct dict_t * dict) {
+    dict->node = NULL;
+    dict->characters = NULL;
+}
+
+void add_new_character(struct dict_t * dict, struct node_t * node, char character) {
+    // Used when there is a guaranteed clear spot at 'char' in dict->characers[]
+    assert("The spot wasn't clear"
+    && dict->characters->entries[character] == NULL);
+
+    struct dict_t node_entry;
+    node_entry.node = node;
+    dict->characters->entries[character] = &node_entry;
+
+};
 
 struct node_t * add_edge(struct node_t * from, struct node_t * to, uint32_t cost) {
     // If there is still space for more edges without expanding
@@ -124,24 +148,43 @@ void print_data(struct node_t * a) {
 int main(int argc, char const *argv[])
 {
 
-    struct node_t * a;
-    a = create_node(0);
-    a->shortest_distance = 12;
+    struct dict_t root;
+    initialize_dict(&root);
 
-    struct node_t * b;
-    b = create_node(1);
-    b->shortest_distance = 11;
+    struct dict_list_t c;
+    memset(c.entries, 0, sizeof(struct dict_t *)*256);
+    root.characters = &c;
+
+
+    struct node_t a;
+    initialize_node(&a);
+
+    assert(root.characters->entries['H'] == NULL);
+    add_new_character(&root, &a, 'H');
+    assert(root.characters->entries['H']->node == &a);
+
+
+
+    // add_new_character(root, a, 'A');
+
+    // struct node_t * a;
+    // a = create_node();
+    // a->shortest_distance = 12;
+
+    // struct node_t * b;
+    // b = create_node();
+    // b->shortest_distance = 11;
 
     // a = add_edge(a, b, 69);
 
-    struct node_t * p[] = {b, a};
-    printf("%d, %d\n", p[0]->shortest_distance, p[1]->shortest_distance);
-    qsort(p, 2, sizeof(struct node_t *), comp_nodes);
-    printf("%d, %d\n", p[0]->shortest_distance, p[1]->shortest_distance);
+    // struct node_t * p[] = {b, a};
+    // printf("%d, %d\n", p[0]->shortest_distance, p[1]->shortest_distance);
+    // qsort(p, 2, sizeof(struct node_t *), comp_nodes);
+    // printf("%d, %d\n", p[0]->shortest_distance, p[1]->shortest_distance);
 
 
-    free(a);
-    free(b);
+    // free(a);
+    // free(b);
 
     return 0;
 }
