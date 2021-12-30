@@ -1,16 +1,22 @@
 #include <assert.h>
+#include <stdio.h>
+#include <string.h>
 
-void foo(int * bar) {
-    *bar = 10;
+void foo(char * rebar) {
+
+    char bar[10];
+
+    strncpy(bar, rebar, sizeof(char)*5);
+
+    for (int i = 0; i < 5; i++)
+    {
+        printf("%c", bar[i]);
+    }
+    printf("\n");
 }
 
 int main(int argc, char const *argv[])
 {
-    int * p;
-    int a = 0;
-    p = &a;
-    assert(*p == 0);
-    foo(p);
-    assert(*p == 10);
-    return 0;
+    // foo("Hello");
+    assert(strcmp("Hello", "Hello") == 0);
 }
