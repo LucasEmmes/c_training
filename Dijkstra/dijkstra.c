@@ -17,7 +17,7 @@ struct node_t {
     uint32_t id;
     char name[10];
     uint64_t shortest_distance;
-    uint32_t best_parent;
+    struct node_t * best_parent;
     uint8_t in_queue;
     uint16_t num_of_actual_edges;
     uint16_t num_of_edges_available;
@@ -39,10 +39,10 @@ struct node_t * initialize_node(char * name) {
     
     new_node->id = id_counter;
     new_node->shortest_distance = -1;
-    new_node->best_parent = 0;
     new_node->in_queue = 0;
     new_node->num_of_actual_edges = 0;
     new_node->num_of_edges_available = 10;
+    new_node->best_parent = NULL;
 
     strncpy(new_node->name, name, sizeof(char)*10);
 
@@ -368,6 +368,7 @@ struct node_t * * read_data(struct dict_t * root) {
         // make edges
         node_a = add_edge(node_a, node_b, cost);
     }
+    search_dict(root, start_name, 0)->shortest_distance = 0;
     return node_list;
 }
 
@@ -404,7 +405,7 @@ void dijkstra(struct node_t ** node_list, struct dict_t * dictionairy, char * st
         queue_length --;
         current_node->in_queue = 0;
 
-        printf("POPPED NODE %s\n", current_node->name);
+        // printf("POPPED NODE %s\n", current_node->name);
 
         // IS NODE GOAL? => DONE
         // if node.id == goal.id
@@ -427,8 +428,8 @@ void dijkstra(struct node_t ** node_list, struct dict_t * dictionairy, char * st
                 // n.shortest = node.shortest + edge.cost
                 current_edge_node->shortest_distance = current_node->shortest_distance + current_node->edges[i].cost;
                 // n.best_parent = node
-                current_edge_node->best_parent = current_node->id;
-                printf("UPDATED NODE %s\n", current_edge_node->name);
+                current_edge_node->best_parent = current_node;
+                // printf("UPDATED NODE %s\n", current_edge_node->name);
                 // if not n.in_queue
                 if (!current_edge_node->in_queue)
                 {
@@ -437,7 +438,7 @@ void dijkstra(struct node_t ** node_list, struct dict_t * dictionairy, char * st
                     // queue[last] = n
                     queue[queue_length-1] = current_edge_node;
                     current_edge_node->in_queue = 1;
-                    printf("QUEUED NODE %s\n", current_edge_node->name);
+                    // printf("QUEUED NODE %s\n", current_edge_node->name);
 
                 }
             }
@@ -458,6 +459,15 @@ void print_data(struct node_t * a) {
     printf("Best parent: %d\n", a->best_parent);
     printf("Actual edges: %d\n", a->num_of_actual_edges);
     printf("Edges available: %d\n", a->num_of_edges_available);
+}
+
+void print_path(struct node_t * goal) {
+    struct node_t * parent = goal->best_parent;
+    if (parent != NULL)
+    {
+        print_path(parent);
+    }
+    printf("%s\n", goal->name);    
 }
 
 int main(int argc, char const *argv[])
@@ -484,7 +494,9 @@ int main(int argc, char const *argv[])
     // assert(search_dict(&root, "HI", 0) == a);
     struct node_t * * nodelist = read_data(&root);
 
-    dijkstra(nodelist, &root, "Start", "Goal");
+    dijkstra(nodelist, &root, "B", "F");
+
+    print_path(search_dict(&root, "F", 0));
 
     return 0;
 }
