@@ -5,6 +5,11 @@
 #include <string.h>
 
 uint32_t id_counter = 0;
+char global_start_name[10];
+char global_goal_name[10];
+
+
+
 
 struct node_t;
 
@@ -267,6 +272,8 @@ int comp_nodes(const void * a, const void * b) {
 }
 
 struct node_t * * read_data(struct dict_t * root) {
+    memset(global_start_name, 0, sizeof(char) * 10);
+    memset(global_goal_name, 0, sizeof(char) * 10);
     FILE * fp = fopen("dijkstra_data.txt", "r");
     assert(fp);
 
@@ -288,23 +295,23 @@ struct node_t * * read_data(struct dict_t * root) {
     memset(node_list, 0, sizeof(struct node_t *) * number_of_lines*2);
 
     // save data
-    char start_name[10];
-    char end_name[10];
-    memset(start_name, 0, sizeof(char) * 10);
-    memset(end_name, 0, sizeof(char) * 10);
+    // char start_name[10];
+    // char end_name[10];
+    // memset(start_name, 0, sizeof(char) * 10);
+    // memset(end_name, 0, sizeof(char) * 10);
 
     // get start and goal names
     int counter = 0;
     next_char = fgetc(fp);
     while (next_char != 10 && next_char != EOF) {
-        start_name[counter] = (char) next_char;
+        global_start_name[counter] = (char) next_char;
         counter ++;
         next_char = fgetc(fp);
     }
     counter = 0;
     next_char = fgetc(fp);
     while (next_char != 10 && next_char != EOF) {
-        end_name[counter] = (char) next_char;
+        global_goal_name[counter] = (char) next_char;
         counter ++;
         next_char = fgetc(fp);
     }
@@ -368,13 +375,13 @@ struct node_t * * read_data(struct dict_t * root) {
         // make edges
         node_a = add_edge(node_a, node_b, cost);
     }
-    search_dict(root, start_name, 0)->shortest_distance = 0;
+    search_dict(root, global_start_name, 0)->shortest_distance = 0;
     return node_list;
 }
 
-void dijkstra(struct node_t ** node_list, struct dict_t * dictionairy, char * start_name, char * goal_name) {
+void dijkstra(struct dict_t * dictionairy) {
     // uint32_t node_list_length can be replaced with global id_counter
-    
+    struct node_t * * node_list = read_data(dictionairy);
     // set up vars
     struct node_t * current_edge_node;
     struct node_t * current_node;
@@ -383,12 +390,12 @@ void dijkstra(struct node_t ** node_list, struct dict_t * dictionairy, char * st
     struct node_t * * queue = malloc(sizeof(struct node_t *) * id_counter);
     memset(queue, 0, sizeof(sizeof(struct node_t *) * id_counter));
     // add start node to queue
-    struct node_t * start = search_dict(dictionairy, start_name, 0);
+    struct node_t * start = search_dict(dictionairy, global_start_name, 0);
     assert("START NODE DOESN'T EXIST" && start != NULL);
     queue[0] = start;
 
     // find end node
-    struct node_t * goal = search_dict(dictionairy, goal_name, 0);
+    struct node_t * goal = search_dict(dictionairy, global_goal_name, 0);
     assert("GOAL NODE DOESN'T EXIST" && goal != NULL);
 
     // counter for queue length
@@ -492,11 +499,11 @@ int main(int argc, char const *argv[])
 
     // assert(search_dict(&root, "HELLO", 0) == b);
     // assert(search_dict(&root, "HI", 0) == a);
-    struct node_t * * nodelist = read_data(&root);
+    
 
-    dijkstra(nodelist, &root, "B", "F");
+    dijkstra(&root);
 
-    print_path(search_dict(&root, "F", 0));
+    print_path(search_dict(&root, global_goal_name, 0));
 
     return 0;
 }
