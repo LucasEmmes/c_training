@@ -7,7 +7,7 @@
 uint32_t id_counter = 0;
 char global_start_name[10];
 char global_goal_name[10];
-
+uint64_t number_of_lines = 1;
 
 
 
@@ -278,7 +278,6 @@ struct node_t * * read_data(struct dict_t * root) {
     assert(fp);
 
     // count lines
-    uint64_t number_of_lines = 1;
 
     int next_char = fgetc(fp);
     while (next_char != EOF) {
@@ -379,6 +378,40 @@ struct node_t * * read_data(struct dict_t * root) {
     return node_list;
 }
 
+void destroy_nodes(struct node_t * * node_list) {
+    for (uint64_t i = 0; i < number_of_lines*2; i++)
+    {
+        struct node_t * next_node = node_list[i];
+        if (next_node == NULL) {
+            break;
+        }
+        free(next_node);
+    }
+}
+
+void print_path(struct node_t * goal) {
+    struct node_t * parent = goal->best_parent;
+    if (parent != NULL)
+    {
+        print_path(parent);
+    }
+    printf("%s\n", goal->name);    
+}
+
+void destroy_dictionairy(struct dict_t * root) {
+    if (root->characters != NULL) {
+        for (int i = 0; i < 256; i++)
+        {
+            struct dict_t * next_dict = root->characters->entries[i];
+            if (next_dict != NULL) {
+                destroy_dictionairy(next_dict);
+            }
+        }
+        free(root->characters);
+    }
+    free(root);
+}
+
 void dijkstra(struct dict_t * dictionairy) {
     // uint32_t node_list_length can be replaced with global id_counter
     struct node_t * * node_list = read_data(dictionairy);
@@ -457,6 +490,12 @@ void dijkstra(struct dict_t * dictionairy) {
 
     }
     // DO SOME SHID
+    print_path(search_dict(dictionairy, global_goal_name, 0));
+    // FREE QUEUE
+    destroy_nodes(node_list);
+    free(queue);
+    free(node_list);
+    destroy_dictionairy(dictionairy);
 };
 
 
@@ -468,42 +507,19 @@ void print_data(struct node_t * a) {
     printf("Edges available: %d\n", a->num_of_edges_available);
 }
 
-void print_path(struct node_t * goal) {
-    struct node_t * parent = goal->best_parent;
-    if (parent != NULL)
-    {
-        print_path(parent);
-    }
-    printf("%s\n", goal->name);    
-}
+
 
 int main(int argc, char const *argv[])
 {
 
-    struct dict_t root;
-    initialize_dict(&root);
+    struct dict_t * root = malloc(sizeof(* root));
+    initialize_dict(root);
 
-    struct dict_list_t root_list;
-    initialize_dict_list(&root_list);
-    root.characters = &root_list;
+    struct dict_list_t * root_list = malloc(sizeof(* root_list));
+    initialize_dict_list(root_list);
+    root->characters = root_list;
 
-    // struct node_t * a;
-    // a = initialize_node("HI");
-    // struct node_t * b;
-    // b = initialize_node("HELLO");
-
-    search_dict(&root, "HI", 0);
-
-    // add_node_to_dict(&root, a, 0);
-    // add_node_to_dict(&root, b, 0);
-
-    // assert(search_dict(&root, "HELLO", 0) == b);
-    // assert(search_dict(&root, "HI", 0) == a);
-    
-
-    dijkstra(&root);
-
-    print_path(search_dict(&root, global_goal_name, 0));
+    dijkstra(root);
 
     return 0;
 }
