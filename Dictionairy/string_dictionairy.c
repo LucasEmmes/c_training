@@ -15,7 +15,7 @@ struct dictionairy_t {
 };
 
 struct dictionairy_list_t {
-    struct dictionairy_t * * dict_pointer;
+    struct dictionairy_t * dict_pointer[256];
 };
 
 struct dictionairy_entry_t * init_entry(char * key, void * value) {
@@ -106,12 +106,36 @@ struct dictionairy_t * create_dictionairy() {
     return dict;
 }
 
-struct dictionairy_entry_t * search_dictionairy();
+void * search_dictionairy(struct dictionairy_t * root, char * key) {
+    if (root->entry != NULL) {
+        if (!strcmp(root->entry->key, key)) {
+            return root->entry->value;
+        } else if (!key[root->depth]) {
+            return NULL;
+        } else if (root->subdict_list != NULL) {
+            char c = key[root->depth];
+            struct dictionairy_t * next_dict = root->subdict_list->dict_pointer[c];
+            return search_dictionairy(next_dict, key);
+        } else {
+            return NULL;
+        }
+    } else if (root->subdict_list != NULL) {
+        char c = key[root->depth];
+        struct dictionairy_t * next_dict = root->subdict_list->dict_pointer[c];
+        
+        if (next_dict == NULL) {return NULL;}
+
+        return search_dictionairy(next_dict, key);
+    } else {
+        printf("ROOT MISSING ENTRY AND SUBDICT LIST");
+        return NULL;
+    }
+}
 
 void destroy_dictionairy();
 
 struct data_t {
-    char id;
+    int id;
 };
 
 int main(int argc, char const *argv[])
@@ -119,12 +143,17 @@ int main(int argc, char const *argv[])
     struct data_t a;
     a.id = 69;
     
+    struct data_t b;
+    b.id = 420;
 
     struct dictionairy_t * dictionairy = create_dictionairy();
-    struct dictionairy_entry_t * a = init_entry("wow", a);
+    struct dictionairy_entry_t * entry_a = init_entry("wow", &a);
+    make_dictionairy_entry(dictionairy, entry_a);
+    struct dictionairy_entry_t * entry_b = init_entry("wow2", &b);
+    make_dictionairy_entry(dictionairy, entry_b);
 
-
-
+    assert((struct data_t *) search_dictionairy(dictionairy, "wow") == &a);
+    assert((struct data_t *) search_dictionairy(dictionairy, "wow2") == &b);
 
     return 0;
 }
