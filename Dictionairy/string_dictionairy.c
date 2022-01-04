@@ -20,17 +20,22 @@ struct dictionairy_list_t {
 
 struct dictionairy_entry_t * init_entry(char * key, void * value) {
     struct dictionairy_entry_t * new_entry = malloc(sizeof(key) + sizeof(value));
+    new_entry->key = key;
+    new_entry->value = value;
     return new_entry;
 }
 
 struct dictionairy_t * init_dictionairy(__uint8_t depth) {
     struct dictionairy_t * new_dict = malloc(sizeof(* new_dict));
     new_dict->depth = depth;
+    new_dict->entry = NULL;
+    new_dict->subdict_list = NULL;
     return new_dict;
 }
 
 struct dictionairy_list_t * init_subdict_list() {
     struct dictionairy_list_t * new_subdict_list = malloc(sizeof(struct dictionairy_t *) * 256);
+    memset(new_subdict_list, 0, sizeof(struct dictionairy_t *) * 256);
     return new_subdict_list;
 }
 
@@ -95,12 +100,31 @@ void make_dictionairy_entry(struct dictionairy_t * root_dict, struct dictionairy
     }
 }
 
+struct dictionairy_t * create_dictionairy() {
+    struct dictionairy_t * dict = init_dictionairy(0);
+    dict->subdict_list = init_subdict_list();
+    return dict;
+}
+
 struct dictionairy_entry_t * search_dictionairy();
 
 void destroy_dictionairy();
 
+struct data_t {
+    char id;
+};
+
 int main(int argc, char const *argv[])
 {
+    struct data_t a;
+    a.id = 69;
     
+
+    struct dictionairy_t * dictionairy = create_dictionairy();
+    struct dictionairy_entry_t * a = init_entry("wow", a);
+
+
+
+
     return 0;
 }
