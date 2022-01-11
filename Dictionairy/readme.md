@@ -5,7 +5,8 @@ such that I might sort data more effectively (and with less brain-pain)
 while I get more comfortable with c.
 
 # Usage  
-To make a new dictionairy, use `struct dictionairy_t * create_dictionairy(void)`  
+To make a new dictionairy, use `struct dictionairy_t * create_dictionairy(void)`.  
+This returns a pointer to a new dictionairy_t struct, fresh and ready to use.  
 
 When adding data, use `void dictionairy_add(struct dictionairy_t * root_dict, char * key, void * value)`  
 where `root_dict` is your dictionairy pointer from above, `key` is the key for your entry
