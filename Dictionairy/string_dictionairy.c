@@ -1,7 +1,6 @@
-#include <stdio.h>
 #include <stdlib.h>
-#include <assert.h>
 #include <string.h>
+#include <stdint.h>
 
 struct dictionairy_entry_t {
     char * key;
@@ -9,7 +8,7 @@ struct dictionairy_entry_t {
 };
 
 struct dictionairy_t {
-    __uint8_t depth;
+    uint8_t depth;
     struct dictionairy_entry_t * entry;
     struct dictionairy_list_t * subdict_list;
 };
@@ -18,6 +17,7 @@ struct dictionairy_list_t {
     struct dictionairy_t * dict_pointer[256];
 };
 
+// Used to initialize an dictionairy_entry_t element. Mallocs memory and sets attributes
 struct dictionairy_entry_t * init_entry(char * key, void * value) {
     struct dictionairy_entry_t * new_entry = malloc(sizeof(key) + sizeof(value));
     new_entry->key = key;
@@ -25,7 +25,8 @@ struct dictionairy_entry_t * init_entry(char * key, void * value) {
     return new_entry;
 }
 
-struct dictionairy_t * init_dictionairy(__uint8_t depth) {
+// Same but for dictionairy_t elements
+struct dictionairy_t * init_dictionairy(uint8_t depth) {
     struct dictionairy_t * new_dict = malloc(sizeof(* new_dict));
     new_dict->depth = depth;
     new_dict->entry = NULL;
@@ -33,17 +34,20 @@ struct dictionairy_t * init_dictionairy(__uint8_t depth) {
     return new_dict;
 }
 
+// Same but for dictionairy_list_t elements
 struct dictionairy_list_t * init_subdict_list() {
     struct dictionairy_list_t * new_subdict_list = malloc(sizeof(struct dictionairy_t *) * 256);
     memset(new_subdict_list, 0, sizeof(struct dictionairy_t *) * 256);
     return new_subdict_list;
 }
 
+// Adds a dictionairy_entry_t element to the dictionairy, and dynamically extends and
+// re-arranges the dictionairy as neccessary
 void make_dictionairy_entry(struct dictionairy_t * root_dict, struct dictionairy_entry_t * entry) {
     char c = entry->key[root_dict->depth];
 
+    // Nothing occupying the current dict
     if (root_dict->entry == NULL) {
-        assert(root_dict->subdict_list != NULL);
 
         // Subdict entry doesn't point anywhere
         if (root_dict->subdict_list->dict_pointer[c] == NULL) {
@@ -55,9 +59,11 @@ void make_dictionairy_entry(struct dictionairy_t * root_dict, struct dictionairy
         } else {
             make_dictionairy_entry(root_dict->subdict_list->dict_pointer[c], entry);
         }
+    // There is something occupying the dict
     } else {
         char next_key_character = entry->key[root_dict->depth];
 
+        // We're out of chcracters and cannot move the entry further down
         if (next_key_character == 0) {
 
             if (strcmp(root_dict->entry->key, entry->key)) {
@@ -79,10 +85,9 @@ void make_dictionairy_entry(struct dictionairy_t * root_dict, struct dictionairy
 
                 make_dictionairy_entry(root_dict->subdict_list->dict_pointer[next_old_entry_character], entry);
 
-            } else {
-                printf("NODE IS ALREADY IN DICT");
             }
 
+        // We *CAN* move the entry further down to make space
         } else {
 
             if (root_dict->subdict_list == NULL) {
@@ -100,12 +105,20 @@ void make_dictionairy_entry(struct dictionairy_t * root_dict, struct dictionairy
     }
 }
 
+// Call this when adding items to your dict
+void dictionairy_add(struct dictionairy_t * root_dict, char * key, void * value) {
+    struct dictionairy_entry_t * entry = init_entry(key, value);
+    make_dictionairy_entry(root_dict, entry);
+}
+
+// Call this function in your code to generate a fresh dictionairy which you can add entries to
 struct dictionairy_t * create_dictionairy() {
     struct dictionairy_t * dict = init_dictionairy(0);
     dict->subdict_list = init_subdict_list();
     return dict;
 }
 
+// Use this to search for entries by their string-key in a given dictionairy
 void * search_dictionairy(struct dictionairy_t * root, char * key) {
     if (root->entry != NULL) {
         if (!strcmp(root->entry->key, key)) {
@@ -127,33 +140,21 @@ void * search_dictionairy(struct dictionairy_t * root, char * key) {
 
         return search_dictionairy(next_dict, key);
     } else {
-        printf("ROOT MISSING ENTRY AND SUBDICT LIST");
         return NULL;
     }
 }
 
-void destroy_dictionairy();
-
-struct data_t {
-    int id;
-};
-
-int main(int argc, char const *argv[])
-{
-    struct data_t a;
-    a.id = 69;
-    
-    struct data_t b;
-    b.id = 420;
-
-    struct dictionairy_t * dictionairy = create_dictionairy();
-    struct dictionairy_entry_t * entry_a = init_entry("wow", &a);
-    make_dictionairy_entry(dictionairy, entry_a);
-    struct dictionairy_entry_t * entry_b = init_entry("wow2", &b);
-    make_dictionairy_entry(dictionairy, entry_b);
-
-    assert((struct data_t *) search_dictionairy(dictionairy, "wow") == &a);
-    assert((struct data_t *) search_dictionairy(dictionairy, "wow2") == &b);
-
-    return 0;
+// Call this when you're done with your doctionairy to free up malloc'ed space
+void destroy_dictionairy(struct dictionairy_t * root) {
+    if (root->subdict_list != NULL) {
+        for (int i = 0; i < 256; i++) {
+            struct dictionairy_t * next_dict = root->subdict_list->dict_pointer[i];
+            if (next_dict != NULL) {
+                destroy_dictionairy(next_dict);
+            }
+        }
+        free(root->subdict_list);
+    }
+    if (root->entry != NULL) {free(root->entry);}
+    free(root);
 }
