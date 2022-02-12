@@ -20,12 +20,12 @@ struct node_t {
     uint16_t num_of_actual_edges;
     uint16_t num_of_edges_available;
     char in_queue;
-    struct edge_t edges[];
+    struct edge_t ** edges;
 };
 
 struct node_t * initialize_node(char name[12]) {
     // Make new node pointer
-    struct node_t * node = malloc(sizeof(* node) + sizeof(struct edge_t)*5);
+    struct node_t * node = malloc(sizeof(* node));
     uid_counter ++;
     
     // Initialize with empty fields
@@ -33,53 +33,59 @@ struct node_t * initialize_node(char name[12]) {
     node->shortest_distance = -1;
     node->in_queue = 0;
     node->num_of_actual_edges = 0;
-    node->num_of_edges_available = 5;
+    node->num_of_edges_available = 0;
     node->best_parent = NULL;
+    node->edges = NULL;
     // Copy over name
     strncpy(node->name, name, sizeof(char)*12);
 
     return node;
 }
 
-struct node_t * add_edge(struct node_t * from, struct node_t * to, uint64_t cost) {
-    // There is still space for more edges => add edge
-    if (from->num_of_edges_available > from->num_of_actual_edges) {
-        // Make edge
-        struct edge_t new_edge;
-        new_edge.node = to;
-        new_edge.cost = cost;
-        // Add struct to array
-        from->edges[from->num_of_actual_edges] = new_edge;
-        // Add 1 to counter
-        from->num_of_actual_edges++;
+void add_edge(struct node_t * from, struct node_t * to, uint64_t cost) {
+    // No edges allocated yet
+    if (from->num_of_actual_edges == 0) {
+        struct edge_t ** edge_array = malloc(sizeof(struct edge_t *) * 5);
 
-        return from;
+        from->edges = edge_array;
+        from->num_of_edges_available = 5;
+
     }
-    // There are no more spaces => double num of possible edges, then add
-    else {
-        struct node_t * larger_node = malloc(sizeof(* larger_node) + sizeof(struct edge_t)*from->num_of_edges_available*2);
-        memcpy(larger_node, from, sizeof(*from));
-        larger_node->num_of_edges_available = from->num_of_edges_available*2;
-        free(from);
+    // No more edges available, extend
+    else if (from->num_of_actual_edges == from->num_of_edges_available) {
 
-        // Make edge struct
-        struct edge_t new_edge;
-        new_edge.node = to;
-        new_edge.cost = cost;
+        struct edge_t ** bigger_edge_array = malloc(sizeof(struct edge_t *) * from->num_of_edges_available*2);
+        memcpy(bigger_edge_array, from->edges, sizeof(from->edges));
+        free(from->edges);
+        from->edges = bigger_edge_array;
 
-        // Add struct to array
-        larger_node->edges[larger_node->num_of_actual_edges] = new_edge;
+    }
 
-        // Add 1 to counter
-        larger_node->num_of_actual_edges++;
+    // Make edge
+    struct edge_t * edge;
+    edge->cost = cost;
+    edge->node = to;
 
-        return larger_node;
+    // Add edge
+    from->edges[from->num_of_actual_edges] = edge;
+    from->num_of_actual_edges++;
+}
+
+void print_edges(struct node_t * node) {
+    for (uint16_t i; i < node->num_of_actual_edges; i++) {
+        printf("%s", node->edges[i]->node->name);
     }
 }
 
+
 int main(int argc, char const *argv[]) {
 
-    struct node_t * n = initialize_node("Hello World");
+    struct node_t * a = initialize_node("A           ");
+    struct node_t * b = initialize_node("Hello World");
+
+    add_edge(a, b, 10);
+
+    print_edges(a);
 
     return 0;
 }
