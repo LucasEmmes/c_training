@@ -100,6 +100,10 @@ struct node_t * retrieve_node(struct dictionairy_t * node_dict, FILE * fp) {
         node = initialize_node(node_name);
         // Add to dict
         dictionairy_add(node_dict, node_name, node);
+
+        printf("MADE node \"%s\" @ %u\n", node_name, node);
+    }else {
+        printf("FOUND node \"%s\" @ %u\n", node_name, node);
     }
 
     return node;
@@ -119,49 +123,38 @@ uint64_t retrieve_cost(FILE * fp) {
     return cost;
 }
 
-void read_data(char * filename, struct dictionairy_t * node_dict) {
-    FILE * fp = fopen("file.txt", "r");
-    assert(fp);
-
-    // Set up variables
-    char name_start[12];
-    char name_goal[12];
-    memset(name_start, 0, sizeof(name_start));
-    memset(name_goal, 0, sizeof(name_goal));
-
-    // Read name of start node
-    read_node_name(name_start, ',', fp);
-    // Read name of goal node
-    read_node_name(name_goal, '\n', fp);
-
+void read_data(struct dictionairy_t * node_dict, FILE * fp) {
     // Loop to read nodes and costs and make edges
     while (1) {
-        // Get node A
         struct node_t * node_a = retrieve_node(node_dict, fp);
-        // Get node B
         struct node_t * node_b = retrieve_node(node_dict, fp);
-        // Get cost
         uint64_t cost = retrieve_cost(fp);
+        add_edge(node_a, node_b, cost);
 
         // Check if we've reached an EOF
         int b = fgetc(fp);
         if (b == EOF) {break;}
         else {ungetc(b, fp);}
     }
-
-    fclose(fp);
 }
 
-void dijkstra(struct node_t * start, struct node_t * goal) {
-
-    
-
-}
+void dijkstra(struct node_t * start, struct node_t * goal);
 
 int main(int argc, char const *argv[]) {
     struct dictionairy_t * node_dict = create_dictionairy();
+    FILE * fp = fopen("file.csv", "r");
+    assert(fp);
 
-    read_data("file.txt", node_dict);
+    // Read start and goal nodes
+    struct node_t * start = retrieve_node(node_dict, fp);
+    struct node_t * goal = retrieve_node(node_dict, fp);
+    // Throw away unneccesary \n
+    fgetc(fp);
+    // Read all edges
+    read_data(node_dict, fp);
+    
 
+    destroy_dictionairy(node_dict);
+    fclose(fp);
     return 0;
 }

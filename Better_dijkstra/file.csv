@@ -1,3 +1,8 @@
-Ronald,Mcdonald,
-Clark,Ken,10
-A,B,12
+Start,Goal,
+Start,Bergen,1
+Bergen,Trondheim,1
+Trondheim,Oslo,1
+Oslo,Bergen,1
+Bergen,Goal,1
+Trondheim,Goal,1
+Oslo,Goal,1
