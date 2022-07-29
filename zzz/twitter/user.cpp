@@ -20,19 +20,24 @@ User::User(string un, string pw) {
     // Apply password
     password = pw;
 }
-
-string getUsername() {
+string User::getUsername() {
     return username;
 }
+
+list<Tweet*> User::getTweets() {
+    return userTweets;
+};
 
 void User::info() {
     cout
     <<"User: @"<<username<<"\n"
     <<"PWD: "<<password<<"\n"
+    <<"Tweets: "<<userTweets.size()<<"\n"
     <<endl;
 }
 
-Tweet User::makeTweet(string content) {
-    Tweet t(this, content);
+Tweet* User::makeTweet(string content) {
+    Tweet* t = new Tweet(this, content);
+    userTweets.push_back(t);
     return t;
 }
